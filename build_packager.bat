@@ -67,10 +67,10 @@ IF EXIST *.msi DEL *.msi /Q
 IF EXIST *.msi ECHO Error: Cannot clean old builds && EXIT /B 1
 
 :: Get a fresh copy of the official Pandion IM source code repository
-IF EXIST "%WORKSPACE%/Source" RMDIR /S /Q "%WORKSPACE%/Source"
-IF EXIST "%WORKSPACE%/Source" ECHO Error: Cannot clean the build environment && EXIT /B 1
+IF EXIST "%WORKSPACE%\Source" RMDIR /S /Q "%WORKSPACE%\Source"
+IF EXIST "%WORKSPACE%\Source" ECHO Error: Cannot clean the build environment && EXIT /B 1
 ECHO Getting the official source code
-%GIT% clone git://github.com/pandion/pandion.git "%WORKSPACE%/Source"
+%GIT% clone git://github.com/pandion/pandion.git "%WORKSPACE%\Source"
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot clone the official source code repository && EXIT /B 1
 CD "%WORKSPACE%\Source"
 
@@ -96,10 +96,10 @@ IF NOT EXIST Client\src\main.html ECHO Error: Invalid source code ZIP archive &&
 
 :: Client source code from custom Git repository
 IF /I %source_type% NEQ git GOTO skip_git
-IF EXIST "./Client" RMDIR /S /Q "./Client"
-IF EXIST "./Client" ECHO Error: Cannot clean the Client subdirectory && EXIT /B 1
-IF EXIST "./ExternalRepository" RMDIR /S /Q "./ExternalRepository"
-IF EXIST "./ExternalRepository" ECHO Error: Cannot clean the ExternalRepository subdirectory && EXIT /B 1
+IF EXIST Client RMDIR /S /Q Client
+IF EXIST Client ECHO Error: Cannot clean the Client subdirectory && EXIT /B 1
+IF EXIST ExternalRepository RMDIR /S /Q ExternalRepository
+IF EXIST ExternalRepository ECHO Error: Cannot clean the ExternalRepository subdirectory && EXIT /B 1
 %GIT% clone %source_git_url% ExternalRepository
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot clone the repository "%source_git_url%" && EXIT /B 1
 ROBOCOPY ExternalRepository\Client Client /E /NJH /NJS /NS /NC /NFL /NDL /MOVE
