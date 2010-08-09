@@ -6,7 +6,7 @@
 :: Specified by Packager to Hudson as HTTP POST parameters.
 :: Available during the build as environment variables.
 
-:: [string] source_type: official, zip, git
+:: [choice] source_type: official, zip, git
 :: [string] source_official_tag: the git tag name on the official Pandion repository
 :: [file] source_zip_file: Client.zip
 :: [string] source_git_url: the url of the git repository
@@ -31,44 +31,64 @@
 
 @ECHO OFF
 
-:: Parameter filenames
-SET custom_brand_xml="brand.xml"
-SET custom_default_xml="default.xml"
-SET logo_about="logo_about.png"
-SET logo_ico="logo.ico"
-SET logo_png="logo.png"
-SET logo_signin="logo_signin.png"
-
 :: Configure utility paths
-::SET UNIX=C:\Program Files (x86)\Git\bin
-SET GIT="git.exe"
-SET 7ZIP="C:\Program Files\7-Zip\7z.exe"
+::SET UNIX="%ProgramFiles(x86)%\Git\bin"
+SET GIT=CALL git
+SET SEVENZIP=CALL "%ProgramW6432%\7-Zip\7z.exe"
+
+:: Parameter filenames
+IF NOT DEFINED WORKSPACE SET WORKSPACE=%CD%
+SET source_zip_file="%WORKSPACE%\Client.zip"
+SET custom_brand_xml="%WORKSPACE%\brand.xml"
+SET custom_default_xml="%WORKSPACE%\default.xml"
+SET logo_about="%WORKSPACE%\logo_about.png"
+SET logo_ico="%WORKSPACE%\logo.ico"
+SET logo_png="%WORKSPACE%\logo.png"
+SET logo_signin="%WORKSPACE%\logo_signin.png"
+
+:: Mock the input when debugging
+IF /I "%PACKAGER_DEBUG%" EQU "1" CALL mock_input.bat
+
+:: Input checking: strings/options
+FOR %%A IN (source_type source_official_tag source_git_url) ^
+DO IF NOT DEFINED %%A ECHO Error: Missing build parameter option "%%A" && EXIT /B 1
+
+:: Input checking: files
+::FOR %%A IN (%source_zip_file% %custom_brand_xml% %custom_default_xml% ^
+::            %logo_about% %logo_ico% %logo_png% %logo_signin%) ^
+::DO IF NOT EXIST %%A ECHO Error: Missing build parameter file %%A && EXIT /B 1
+
+:: Input checking: custom source code method
+IF /I %source_type% NEQ official IF /I %source_type% NEQ zip IF /I %source_type% NEQ git ^
+ECHO Error: No source code is specified && EXIT /B 1
+
+:: Cleaning old builds
+IF EXIST *.msi DEL *.msi /Q
+IF EXIST *.msi ECHO Error: Cannot clean old builds && EXIT /B 1
 
 :: Get a fresh copy of the official Pandion IM source code repository
-IF NOT DEFINED WORKSPACE SET WORKSPACE=.
-RMDIR /S /Q "%WORKSPACE%/PandionIM"
-IF EXIST "%WORKSPACE%/PandionIM" ECHO Error: Cannot clean the build environment && EXIT /B 1
-%GIT% clone git://github.com/pandion/pandion.git "%WORKSPACE%/PandionIM"
+IF EXIST "%WORKSPACE%/Source" RMDIR /S /Q "%WORKSPACE%/Source"
+IF EXIST "%WORKSPACE%/Source" ECHO Error: Cannot clean the build environment && EXIT /B 1
+ECHO Getting the official source code
+%GIT% clone git://github.com/pandion/pandion.git "%WORKSPACE%/Source"
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot clone the official source code repository && EXIT /B 1
-CD "%WORKSPACE%/PandionIM"
-
-:: Check for Client source code origin
-IF /I %source_type% NEQ official IF /I %source_type% NEQ zip IF /I %source_type% NEQ git ^
-	ECHO Error: No source code is specified && EXIT /B 1
+CD "%WORKSPACE%\Source"
 
 :: Client source code from official Pandion IM repository
 IF /I %source_type% NEQ official GOTO skip_official
-IF %source_official_tag%x EQU x GOTO skip_official
+IF "%source_official_tag%" EQU "" GOTO skip_official
+ECHO Switching to branch %source_official_tag%
 %GIT% checkout %source_official_tag%
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot find the tag "%source_official_tag%" in the official git repository && EXIT /B 1
 :skip_official
 
 :: Client source code from ZIP archive
 IF /I %source_type% NEQ zip GOTO skip_zip
-IF NOT EXIST Client.zip ECHO Error: Missing source code ZIP archive && EXIT /B 1
-RMDIR /S /Q "./Client"
-IF EXIST "./Client" ECHO Error: Cannot remove the official Client source code && EXIT /B 1
-%7ZIP% x -y -oClient Client.zip
+IF NOT EXIST %source_zip_file% ECHO Error: Missing source code ZIP archive && EXIT /B 1
+IF EXIST Client RMDIR /S /Q Client
+IF EXIST Client ECHO Error: Cannot remove the official Client source code && EXIT /B 1
+ECHO Extracting custom Client.zip
+%SEVENZIP% x -y -oClient %source_zip_file% > NUL
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot extract source code ZIP archive && EXIT /B 1
 IF NOT EXIST Client\src\main.html IF EXIST Client\Client ROBOCOPY Client\Client Client /E /NJH /NJS /NS /NC /NFL /NDL /MOVE
 IF NOT EXIST Client\src\main.html ECHO Error: Invalid source code ZIP archive && EXIT /B 1
@@ -76,21 +96,15 @@ IF NOT EXIST Client\src\main.html ECHO Error: Invalid source code ZIP archive &&
 
 :: Client source code from custom Git repository
 IF /I %source_type% NEQ git GOTO skip_git
-RMDIR /S /Q "./Client"
+IF EXIST "./Client" RMDIR /S /Q "./Client"
 IF EXIST "./Client" ECHO Error: Cannot clean the Client subdirectory && EXIT /B 1
-RMDIR /S /Q "./ExternalRepository"
+IF EXIST "./ExternalRepository" RMDIR /S /Q "./ExternalRepository"
 IF EXIST "./ExternalRepository" ECHO Error: Cannot clean the ExternalRepository subdirectory && EXIT /B 1
 %GIT% clone %source_git_url% ExternalRepository
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot clone the repository "%source_git_url%" && EXIT /B 1
 ROBOCOPY ExternalRepository\Client Client /E /NJH /NJS /NS /NC /NFL /NDL /MOVE
 IF NOT EXIST Client\src\main.html ECHO Error: The git repository is missing Client files && EXIT /B 1
 :skip_git
-
-:: Check all file parameters
-IF EXIST %custom_brand_xml% IF EXIST %custom_default_xml% IF EXIST %logo_about% IF EXIST %logo_ico% IF EXIST %logo_png% IF EXIST %logo_signin% ^
-	GOTO files_exist
-ECHO Error: No source code is specified && EXIT /B 1
-:files_exist
 
 :: Replace default settings with custom settings
 IF EXIST %custom_brand_xml% COPY /Y %custom_brand_xml% Client\settings\brand.xml
@@ -139,5 +153,9 @@ IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot build MSI package && EXIT /B 1
 CD "..\.."
 
 :: Clean up the file parameters
-DEL %custom_brand_xml% %custom_default_xml% %logo_about% %logo_ico% %logo_png% %logo_signin% /Q
+DEL %source_zip_file% %custom_brand_xml% %custom_default_xml% %logo_about% %logo_ico% %logo_png% %logo_signin% /Q
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot clean up file parameters && EXIT /B 1
+
+:: Get the setup artifact
+CD ..
+ROBOCOPY .\Source\Installer\WiX . *.msi /MOV /NJH /NJS /NS /NC /NFL /NDL
