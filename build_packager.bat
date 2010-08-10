@@ -50,7 +50,8 @@ SET logo_signin="%WORKSPACE%\logo_signin.png"
 IF /I "%PACKAGER_DEBUG%" EQU "1" CALL mock_input.bat
 
 :: Input checking: strings/options
-FOR %%A IN (source_type source_official_tag source_git_url) ^
+FOR %%A IN (source_type version_major version_minor version_build ^
+            name name_safe company guid homepage_url support_url info_url) ^
 DO IF NOT DEFINED %%A ECHO Error: Missing build parameter option "%%A" && EXIT /B 1
 
 :: Input checking: files
