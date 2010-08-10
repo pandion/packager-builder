@@ -25,7 +25,7 @@
 :: [string] name_safe: name used for files and directories, cannot include \ / : * ? " < > |
 :: [string] homepage_url: the url of the application homepage
 :: [string] company: the name of the application owner organization
-:: [string] guid: unique identifier used by Windows Installer for upgrades, default for Pandion IM is {9F661F94-F17F-4F5C-B1C8-2955C85C8FE9}
+:: [string] guid: unique identifier used by Windows Installer for upgrades, default for Pandion IM is 9F661F94-F17F-4F5C-B1C8-2955C85C8FE9
 :: [string] support_url: the url of an online support resource like documentation or user training guide
 :: [string] info_url: the url of the application homepage
 
