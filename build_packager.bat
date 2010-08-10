@@ -77,6 +77,7 @@ CD "%WORKSPACE%\Source"
 
 :: Client source code from official Pandion IM repository
 IF /I %source_type% NEQ official GOTO skip_official
+ECHO Using source code from official Git repository
 IF "%source_official_tag%" EQU "" GOTO skip_official
 ECHO Switching to branch %source_official_tag%
 %GIT% checkout %source_official_tag%
@@ -85,6 +86,7 @@ IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot find the tag "%source_official_tag%" in
 
 :: Client source code from ZIP archive
 IF /I %source_type% NEQ zip GOTO skip_zip
+ECHO Using source code from custom ZIP archive
 IF NOT EXIST %source_zip_file% ECHO Error: Missing source code ZIP archive && EXIT /B 1
 IF EXIST Client RMDIR /S /Q Client
 IF EXIST Client ECHO Error: Cannot remove the official Client source code && EXIT /B 1
@@ -97,6 +99,7 @@ IF NOT EXIST Client\src\main.html ECHO Error: Invalid source code ZIP archive &&
 
 :: Client source code from custom Git repository
 IF /I %source_type% NEQ git GOTO skip_git
+ECHO Using source code from custom Git repository
 IF EXIST Client RMDIR /S /Q Client
 IF EXIST Client ECHO Error: Cannot clean the Client subdirectory && EXIT /B 1
 IF EXIST ExternalRepository RMDIR /S /Q ExternalRepository
@@ -108,10 +111,12 @@ IF NOT EXIST Client\src\main.html ECHO Error: The git repository is missing Clie
 :skip_git
 
 :: Replace default settings with custom settings
+ECHO Customizing settings
 IF EXIST %custom_brand_xml% COPY /Y %custom_brand_xml% Client\settings\brand.xml
 IF EXIST %custom_default_xml% COPY /Y %custom_default_xml% Client\settings\default.xml
 
 :: Replace default images with custom images
+ECHO Customizing images
 IF EXIST %logo_about% COPY /Y %logo_about% Client\images\about\logo.png
 IF EXIST %logo_ico% COPY /Y %logo_ico% Client\images\brand\default.ico
 IF EXIST %logo_ico% COPY /Y %logo_ico% Host\Source\default.ico
@@ -136,7 +141,7 @@ SET MSI_HELP_URL=%support_url%
 SET MSI_INFO_URL=%info_url%
 
 :: Prepare default build settings
-IF NOT DEFINED BUILD_CONFIG CALL "build_config.bat"
+CALL "build_config.bat"
 
 :: Compile Host
 ECHO Compiling Host...
@@ -154,12 +159,13 @@ IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot build MSI package && EXIT /B 1
 CD "..\.."
 
 :: Clean up the file parameters
+ECHO Cleaning up file parameters
 DEL %source_zip_file% %custom_brand_xml% %custom_default_xml% %logo_about% %logo_ico% %logo_png% %logo_signin% /Q
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot clean up file parameters && EXIT /B 1
 
 :: Present the setup artifact to Hudson and report the correct exit code
 CD ..
+ECHO Locating artifact
 ROBOCOPY .\Source\Installer\WiX . *.msi /MOV /NJH /NJS /NS /NC /NFL /NDL
-IF %ERRORLEVEL% NEQ 1 ECHO Error: Failed to locate artifact
-IF %ERRORLEVEL% NEQ 1 SET ERRORLEVEL 1
-IF %ERRORLEVEL% EQU 1 SET ERRORLEVEL 0
+IF %ERRORLEVEL% NEQ 1 ECHO Error: Failed to locate artifact && EXIT /B 1
+IF %ERRORLEVEL% EQU 1 SET ERRORLEVEL=0
