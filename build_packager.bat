@@ -167,7 +167,5 @@ IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot clean up file parameters && EXIT /B 1
 CD ..
 ECHO Locating artifact
 ROBOCOPY .\Source\Installer\WiX . *.msi /MOV /NJH /NJS /NS /NC /NFL /NDL
-ECHO ErrLvl: %ERRORLEVEL%
 IF %ERRORLEVEL% NEQ 1 ECHO Error: Failed to locate artifact && EXIT /B 1
 IF %ERRORLEVEL% EQU 1 SET ERRORLEVEL=0
-ECHO ErrLvl: %ERRORLEVEL%
