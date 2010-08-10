@@ -157,6 +157,9 @@ CD "..\.."
 DEL %source_zip_file% %custom_brand_xml% %custom_default_xml% %logo_about% %logo_ico% %logo_png% %logo_signin% /Q
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot clean up file parameters && EXIT /B 1
 
-:: Get the setup artifact
+:: Present the setup artifact to Hudson and report the correct exit code
 CD ..
 ROBOCOPY .\Source\Installer\WiX . *.msi /MOV /NJH /NJS /NS /NC /NFL /NDL
+IF %ERRORLEVEL% NEQ 1 ECHO Error: Failed to locate artifact
+IF %ERRORLEVEL% NEQ 1 SET ERRORLEVEL 1
+IF %ERRORLEVEL% EQU 1 SET ERRORLEVEL 0
