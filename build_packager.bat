@@ -37,8 +37,9 @@ SET GIT=CALL git
 SET SEVENZIP=CALL "%ProgramW6432%\7-Zip\7z.exe"
 SET CURL=CALL "%ProgramFiles(x86)%\Git\bin\curl.exe"
 
-:: Packager callback to register the job name and build number with the token
-SET PACKAGER=http://packager.pandion.im/
+:: REST API to register the job name and build number with a token from the Packager
+SET PACKAGER_CALLBACK=http://packager.pandion.im/versions/hudson.xml
+%CURL% --data-urlencode "data[packager_token]=%packager_token%&data[build_number]=%BUILD_NUMBER%" %PACKAGER_CALLBACK%
 
 :: Parameter filenames
 IF NOT DEFINED WORKSPACE SET WORKSPACE=%CD%
