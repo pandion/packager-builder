@@ -39,7 +39,7 @@ SET CURL=CALL "%ProgramFiles(x86)%\Git\bin\curl.exe"
 
 :: REST API to register the job name and build number with a token from the Packager
 SET PACKAGER_CALLBACK=http://packager.pandion.im/versions/hudson.xml
-%CURL% --data-urlencode "data[packager_token]=%packager_token%&data[build_number]=%BUILD_NUMBER%" %PACKAGER_CALLBACK%
+%CURL% --data-urlencode "data[packager_token]=%packager_token%" --data-urlencode "data[build_number]=%BUILD_NUMBER%" %PACKAGER_CALLBACK%
 
 :: Parameter filenames
 IF NOT DEFINED WORKSPACE SET WORKSPACE=%CD%
