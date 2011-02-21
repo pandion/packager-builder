@@ -1,10 +1,13 @@
 :: This file is part of Pandion Packager
-:: Copyright (c) 2010 Sebastiaan Deckers
+:: Copyright (c) 2010-2011 Sebastiaan Deckers
 :: License: GNU General Public License version 3 or later
 
 :: Build Parameters
-:: Specified by Packager to Hudson as HTTP POST parameters.
+:: Specified by Packager to Jenkins as HTTP POST parameters.
 :: Available during the build as environment variables.
+
+:: [string] packager_token: unique ID matching the Packager/CakePHP job
+:: [string] packager_url: HTTP URL of the Packager service to make build notification callbacks. Eg. http://packager.pandion.im/
 
 :: [choice] source_type: official, zip, git
 :: [string] source_official_tag: the git tag name on the official Pandion repository
@@ -38,8 +41,7 @@ SET SEVENZIP=CALL "%ProgramW6432%\7-Zip\7z.exe"
 SET CURL=CALL "%ProgramFiles(x86)%\Git\bin\curl.exe"
 
 :: REST API to register the job name and build number with a token from the Packager
-SET PACKAGER_CALLBACK=http://packager.pandion.im/versions/hudson.xml
-%CURL% --data-urlencode "data[packager_token]=%packager_token%" --data-urlencode "data[build_number]=%BUILD_NUMBER%" %PACKAGER_CALLBACK%
+%CURL% --data-urlencode "data[packager_token]=%packager_token%" --data-urlencode "data[build_number]=%BUILD_NUMBER%" %packager_url%versions/hudson.xml
 
 :: Parameter filenames
 IF NOT DEFINED WORKSPACE SET WORKSPACE=%CD%
@@ -168,7 +170,7 @@ ECHO Cleaning up file parameters
 DEL %source_zip_file% %custom_brand_xml% %custom_default_xml% %logo_about% %logo_ico% %logo_png% %logo_signin% /Q
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot clean up file parameters && EXIT /B 1
 
-:: Present the setup artifact to Hudson and report the correct exit code
+:: Prepare the setup artifact and report the correct exit code
 CD ..
 ECHO Locating artifact
 ROBOCOPY .\Source\Installer\WiX . *.msi /MOV /NJH /NJS /NS /NC /NFL /NDL
