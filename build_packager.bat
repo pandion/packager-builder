@@ -41,7 +41,9 @@ SET SEVENZIP=CALL "%ProgramW6432%\7-Zip\7z.exe"
 SET CURL=CALL "%ProgramFiles(x86)%\Git\bin\curl.exe"
 
 :: REST API to register the job name and build number with a token from the Packager
-%CURL% --data-urlencode "data[packager_token]=%packager_token%" --data-urlencode "data[build_number]=%BUILD_NUMBER%" %packager_url%/versions/hudson.xml
+SET CALLBACK=%packager_url%/versions/hudson.xml
+ECHO Pinging Packager callback at "%CALLBACK%"
+%CURL% --data-urlencode "data[packager_token]=%packager_token%" --data-urlencode "data[build_number]=%BUILD_NUMBER%" "%CALLBACK%"
 IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot contact Packager service with callback && EXIT /B 1
 
 :: Parameter filenames
