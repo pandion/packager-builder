@@ -7,7 +7,7 @@
 :: Available during the build as environment variables.
 
 :: [string] packager_token: unique ID matching the Packager/CakePHP job
-:: [string] packager_url: HTTP URL of the Packager service to make build notification callbacks. Eg. http://packager.pandion.im/
+:: [string] packager_url: HTTP URL of the Packager service to make build notification callbacks. Eg. http://packager.pandion.im
 
 :: [choice] source_type: official, zip, git
 :: [string] source_official_tag: the git tag name on the official Pandion repository
@@ -41,7 +41,8 @@ SET SEVENZIP=CALL "%ProgramW6432%\7-Zip\7z.exe"
 SET CURL=CALL "%ProgramFiles(x86)%\Git\bin\curl.exe"
 
 :: REST API to register the job name and build number with a token from the Packager
-%CURL% --data-urlencode "data[packager_token]=%packager_token%" --data-urlencode "data[build_number]=%BUILD_NUMBER%" %packager_url%versions/hudson.xml
+%CURL% --data-urlencode "data[packager_token]=%packager_token%" --data-urlencode "data[build_number]=%BUILD_NUMBER%" %packager_url%/versions/hudson.xml
+IF %ERRORLEVEL% NEQ 0 ECHO Error: Cannot contact Packager service with callback && EXIT /B 1
 
 :: Parameter filenames
 IF NOT DEFINED WORKSPACE SET WORKSPACE=%CD%
